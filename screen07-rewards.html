@@ -1,0 +1,14 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><title>BARAMEEL RUN — My Rewards</title><link rel="stylesheet" href="./styles.css?v=20260927-8"></head><body><main class="rewards-stage"><img id="runnerArt" class="rewards-art" alt="My runner"><div class="rewards-overlay"></div><button id="back" class="rewards-back" type="button" aria-label="Back"></button><section class="rewards-panel" aria-label="My rewards"><div class="rewards-kicker">MY REWARDS</div><div id="runnerName" class="rewards-runner">BRONA</div><div class="reward-stat"><span class="stat-label">TOTAL POINTS</span><strong id="points">0</strong></div><div class="reward-stat"><span class="stat-label">CHECKPOINTS</span><strong id="checkpoints">0</strong></div><div class="reward-stat"><span class="stat-label">WEEKLY POINTS</span><strong id="weekly">0</strong></div><div class="rewards-progress"><div id="progressFill"></div></div><div id="recent" class="rewards-recent">SCAN A QR TO EARN REWARDS</div><button id="scan" class="rewards-action" type="button">SCAN MORE QR</button></section></main><script src="./app.js?v=20260927-8"></script><script>
+(()=>{
+ const art=document.getElementById('runnerArt'),runner=BR.selected(),name=document.getElementById('runnerName');
+ const files=[`./assets/screen03-${runner}.png`,`./assets/screen02-${runner}.png`,`./assets/screen01-start.webp`];let i=0;function loadNext(){if(i>=files.length)return;art.onerror=()=>{i++;loadNext()};art.src=files[i++]};loadNext();
+ name.textContent=BR.RUNNER_NAMES[runner]||runner.toUpperCase();
+ document.getElementById('points').textContent=Number(BR.state.points||0).toLocaleString();
+ document.getElementById('weekly').textContent=Number(BR.state.weeklyPoints||0).toLocaleString();
+ document.getElementById('checkpoints').textContent=String(BR.checkpointCount());
+ const progress=Math.min(100,(BR.checkpointCount()/90)*100);document.getElementById('progressFill').style.width=progress+'%';
+ const r=BR.state.lastReward;if(r&&!r.duplicate&&r.points){document.getElementById('recent').textContent=`LAST QR • +${Number(r.points).toLocaleString()} POINTS • IMAGE ${String(r.imageNumber||'').padStart(2,'0')} • PIECE ${String(r.piece).padStart(2,'0')}`}
+ document.getElementById('back').onclick=()=>BR.goAfter('screen06.html','back',180);
+ document.getElementById('scan').onclick=()=>BR.goAfter('screen05.html','scan',220);
+})();
+</script><script src="./register-sw.js?v=20260927-8"></script></body></html>
