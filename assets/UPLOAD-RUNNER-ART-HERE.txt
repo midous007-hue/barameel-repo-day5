@@ -1,0 +1,2 @@
+UPLOAD THE 18 RUNNER ARTWORK FILES INTO THIS /assets FOLDER.
+See ASSET-MANIFEST.txt for the exact filenames.
