@@ -1,59 +1,35 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><title>BARAMEEL RUN — Scan the QR Checkpoint</title><link rel="stylesheet" href="./styles.css"><script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script></head>
-<body><main class="scan-stage" style="--ratio:.5772;--ar:953/1651">
-<img id="scanBg" class="scan-art" src="./assets/screen05-scanner.png" alt="Scan the checkpoint">
+<body><main class="scan-stage" style="--ratio:.5772;--ar:953/1651"><img id="scanBg" class="scan-art" src="./assets/screen05-scanner.png" alt="Scan the checkpoint">
 <a id="back" class="scan-back-hotspot" href="./screen04.html" aria-label="Back"></a>
 <div class="camera-window"><video id="video" playsinline muted></video><canvas id="canvas" aria-hidden="true"></canvas><div id="scanLine"></div></div>
 <button type="button" id="open" class="scan-open-hotspot" aria-label="Open camera and scan QR"></button>
 <button type="button" id="puzzleHotspot" class="scan-puzzle-hotspot" aria-label="Continue to puzzle" hidden></button>
 <div id="scanMessage" class="scan-message"></div><div id="successFlash" class="success-flash"></div></main>
 <script src="./app.js"></script><script>
-(function(){
-const video=document.getElementById("video"),canvas=document.getElementById("canvas"),ctx=canvas.getContext("2d",{willReadFrequently:true}),open=document.getElementById("open"),back=document.getElementById("back"),line=document.getElementById("scanLine"),flash=document.getElementById("successFlash"),puzzleHotspot=document.getElementById("puzzleHotspot"),message=document.getElementById("scanMessage");
-let stream=null,detector=null,raf=0,done=false,opening=false,lastTap=0;
-function safeSound(name){try{if(window.BR&&BR.play)BR.play(name)}catch(e){}}
-function showStatus(t){if(message){message.textContent=t||"";message.classList.toggle("show",!!t)}}
-function goBack(e){if(e){e.preventDefault();e.stopPropagation();}stopCamera();safeSound("back");location.replace("./screen04.html");}
-function openCamera(e){if(e){e.preventDefault();e.stopPropagation();}const now=Date.now();if(now-lastTap<450||opening||stream)return;lastTap=now;startCamera();}
-back.addEventListener("click",goBack,{passive:false});
-back.addEventListener("touchend",goBack,{passive:false});
-open.addEventListener("pointerup",openCamera,{passive:false});
-open.addEventListener("touchend",openCamera,{passive:false});
-open.addEventListener("click",openCamera,{passive:false});
-puzzleHotspot.addEventListener("pointerup",function(e){e.preventDefault();e.stopPropagation();if(done)goPuzzle()},{passive:false});
-function goPuzzle(){const tr=JSON.parse(localStorage.getItem("barameelLastQR")||"null");if(tr&&tr.collection&&tr.piece)location.replace(`./screen06.html?collection=${encodeURIComponent(tr.collection)}&image=${encodeURIComponent(tr.image||"image10")}&piece=${encodeURIComponent(tr.piece)}`);else location.replace("./screen06.html");}
+const video=document.getElementById("video"),canvas=document.getElementById("canvas"),ctx=canvas.getContext("2d",{willReadFrequently:true}),open=document.getElementById("open"),back=document.getElementById("back"),line=document.getElementById("scanLine"),flash=document.getElementById("successFlash"),puzzleHotspot=document.getElementById("puzzleHotspot");
+let stream=null,detector=null,raf=0,done=false,lastRaw="",opening=false,lastOpenTap=0;
+function backToRun(e){if(e){e.preventDefault();e.stopPropagation();}BR.play("back");stopCamera();setTimeout(()=>{location.href="./screen04.html"},40);}
+function openCameraFromTap(e){if(e){e.preventDefault();e.stopPropagation();}const now=Date.now();if(now-lastOpenTap<500)return;lastOpenTap=now;if(!opening)startCamera();}
+back.addEventListener("click",backToRun,{passive:false});
+back.addEventListener("touchend",backToRun,{passive:false});
+open.addEventListener("pointerup",openCameraFromTap,{passive:false});
+open.addEventListener("touchend",openCameraFromTap,{passive:false});
+open.addEventListener("click",openCameraFromTap,{passive:false});
+puzzleHotspot.addEventListener("pointerup",e=>{e.preventDefault();if(!done)return;BR.play("confirm");goPuzzle()},{passive:false});
+function goPuzzle(){const tr=JSON.parse(localStorage.getItem("barameelLastQR")||"null");if(tr?.collection&&tr?.piece)location.href=`./screen06.html?collection=${encodeURIComponent(tr.collection)}&piece=${encodeURIComponent(tr.piece)}`;else location.href="./screen06.html"}
 async function startCamera(){
- if(stream||opening)return; opening=true; done=false; puzzleHotspot.hidden=true; showStatus("");
- if(!window.isSecureContext){opening=false;showStatus("CAMERA NEEDS HTTPS");safeSound("error");return;}
- if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){opening=false;showStatus("CAMERA NOT AVAILABLE");safeSound("error");return;}
- try{
-   // Call getUserMedia immediately from the user's tap path; audio/effects never block permission.
-   let constraints={audio:false,video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}}};
-   try{stream=await navigator.mediaDevices.getUserMedia(constraints)}catch(e1){stream=await navigator.mediaDevices.getUserMedia({audio:false,video:true});}
-   video.srcObject=stream;video.style.display="block";
-   await video.play();
-   line.classList.add("on");opening=false;safeSound("scan");
-   if("BarcodeDetector" in window){try{const f=await BarcodeDetector.getSupportedFormats();if(f.includes("qr_code"))detector=new BarcodeDetector({formats:["qr_code"]})}catch(e){detector=null}}
-   if(detector)scanNative();else scanJsQr();
- }catch(e){stream=null;opening=false;video.style.display="none";showStatus(e&&e.name==="NotAllowedError"?"ALLOW CAMERA ACCESS":"CAMERA COULD NOT OPEN");safeSound("error");}
+  if(stream||opening)return; opening=true; done=false;puzzleHotspot.hidden=true;BR.play("scan");
+  if(!navigator.mediaDevices?.getUserMedia){opening=false;BR.play("error");return;}
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{exact:"environment"},width:{ideal:1280},height:{ideal:720}}}).catch(()=>navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:"environment",width:{ideal:1280},height:{ideal:720}}}));
+    video.srcObject=stream;video.style.display="block";await video.play();line.classList.add("on");opening=false;
+    if("BarcodeDetector" in window){try{const f=await BarcodeDetector.getSupportedFormats();if(f.includes("qr_code"))detector=new BarcodeDetector({formats:["qr_code"]});}catch(e){detector=null}}
+    if(detector)scanNative();else scanJsQr();
+  }catch(e){stream=null;opening=false;video.style.display="none";BR.play("error");}
 }
-async function scanNative(){if(done||!detector)return;try{const codes=await detector.detect(video);if(codes&&codes.length){handleQR(codes[0].rawValue||"");return}}catch(e){}raf=requestAnimationFrame(scanNative)}
-function scanJsQr(){if(done)return;if(!window.jsQR){raf=requestAnimationFrame(scanJsQr);return}if(video.readyState>=2&&video.videoWidth){canvas.width=video.videoWidth;canvas.height=video.videoHeight;ctx.drawImage(video,0,0,canvas.width,canvas.height);const image=ctx.getImageData(0,0,canvas.width,canvas.height);const code=window.jsQR(image.data,image.width,image.height,{inversionAttempts:"attemptBoth"});if(code&&code.data){handleQR(code.data);return}}raf=requestAnimationFrame(scanJsQr)}
-async function handleQR(raw){if(done)return;const parsed=BR.parseQR(raw);if(!parsed){safeSound("error");showStatus("INVALID BARAMEEL QR");return}done=true;cancelAnimationFrame(raf);stopCamera();
- try{
-   const cfg=await BR.fetchCollection(parsed.collection);
-   const image=cfg.images.find(x=>x.imageId===parsed.image);
-   const piece=image&&image.pieces.find(x=>Number(x.piece_number)===Number(parsed.piece));
-   if(!image||!piece)throw new Error("unknown piece");
-   const isNew=BR.collect(parsed.collection,parsed.image,parsed.piece);
-   const points=isNew?Number(piece.points||0):0;
-   if(isNew&&points>0)BR.addPoints(points);
-   const reward={collection:parsed.collection,image:parsed.image,piece:Number(parsed.piece),points,duplicate:!isNew,raw,at:Date.now(),imageNumber:image.imageNumber};
-   BR.setLastReward(reward);
-   localStorage.setItem("barameelLastQR",JSON.stringify(reward));
-   if(isNew){safeSound("success");try{BR.startRewardTransition(reward)}catch(e){}}else{safeSound("tap");}
-   flash.classList.add("on");puzzleHotspot.hidden=false;setTimeout(goPuzzle,850);
- }catch(e){done=false;safeSound("error");showStatus("QR NOT IN COLLECTION");}}
-function stopCamera(){cancelAnimationFrame(raf);raf=0;opening=false;if(stream){stream.getTracks().forEach(function(t){try{t.stop()}catch(e){}});stream=null}try{video.pause()}catch(e){}video.srcObject=null;video.style.display="none";line.classList.remove("on")}
+async function scanNative(){if(done||!detector)return;try{const codes=await detector.detect(video);if(codes?.length){handleQR(codes[0].rawValue||"");return;}}catch(e){}raf=requestAnimationFrame(scanNative)}
+function scanJsQr(){if(done)return; if(!window.jsQR){raf=requestAnimationFrame(scanJsQr);return;} if(video.readyState>=2&&video.videoWidth){canvas.width=video.videoWidth;canvas.height=video.videoHeight;ctx.drawImage(video,0,0,canvas.width,canvas.height);const image=ctx.getImageData(0,0,canvas.width,canvas.height);const code=window.jsQR(image.data,image.width,image.height,{inversionAttempts:"attemptBoth"});if(code?.data){handleQR(code.data);return;}}raf=requestAnimationFrame(scanJsQr)}
+function handleQR(raw){if(done)return;const parsed=BR.parseQR(raw);if(!parsed)return;done=true;lastRaw=raw;cancelAnimationFrame(raf);stopCamera();BR.collect(parsed.collection,parsed.piece);BR.addPoints(100);localStorage.setItem("barameelLastQR",JSON.stringify({collection:parsed.collection,piece:parsed.piece,raw,at:Date.now()}));BR.play("success");BR.startRewardTransition(parsed.piece);flash.classList.add("on");puzzleHotspot.hidden=false;setTimeout(goPuzzle,1100)}
+function stopCamera(){cancelAnimationFrame(raf);raf=0;opening=false;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}video.pause();video.srcObject=null;video.style.display="none";line.classList.remove("on")}
 window.addEventListener("pagehide",stopCamera);
-})();
 </script></body></html>
