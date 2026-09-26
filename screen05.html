@@ -45,10 +45,9 @@ async function handleQR(raw){if(done)return;const parsed=BR.parseQR(raw);if(!par
    const piece=image&&image.pieces.find(x=>Number(x.piece_number)===Number(parsed.piece));
    if(!image||!piece)throw new Error("unknown piece");
    const isNew=BR.collect(parsed.collection,parsed.image,parsed.piece);
-   if(isNew && BR.addCheckpoint)BR.addCheckpoint();
    const points=isNew?Number(piece.points||0):0;
    if(isNew&&points>0)BR.addPoints(points);
-   const reward={collection:parsed.collection,image:parsed.image,piece:Number(parsed.piece),points,duplicate:!isNew,raw,at:Date.now(),imageNumber:image.imageNumber,completed:isNew&&BR.count(parsed.collection,parsed.image)===9};
+   const reward={collection:parsed.collection,image:parsed.image,piece:Number(parsed.piece),points,duplicate:!isNew,raw,at:Date.now(),imageNumber:image.imageNumber};
    BR.setLastReward(reward);
    localStorage.setItem("barameelLastQR",JSON.stringify(reward));
    if(isNew){safeSound("success");try{BR.startRewardTransition(reward)}catch(e){}}else{safeSound("tap");}
