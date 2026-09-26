@@ -1,77 +1,47 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><title>BARAMEEL RUN — Scan QR</title><link rel="stylesheet" href="./styles.css"></head><body><main class="scan-stage"><img class="scan-art" src="./assets/screen05-scanner.webp" alt="Scan QR" fetchpriority="high" decoding="async"><a id="back" class="scan-back-hotspot" href="./screen04.html" aria-label="Back"></a><div class="camera-window"><video id="video" playsinline muted></video><div id="scanLine"></div></div><button id="open" type="button" class="scan-open-hotspot" aria-label="Open camera"></button><canvas id="scanCanvas" width="640" height="480" hidden></canvas><div id="msg" class="scan-message" aria-live="polite"></div><div id="flash" class="success-flash"></div></main><script src="./app.js"></script><script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script><script>
-const video=document.getElementById('video'),msg=document.getElementById('msg'),flash=document.getElementById('flash'),canvas=document.getElementById('scanCanvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
-let stream=null,detector=null,raf=0,locked=false,lastFrame=0,scanMode='fallback';
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#061f27"><title>BARAMEEL RUN — Scan QR</title><link rel="stylesheet" href="./styles.css?v=20260926-4"></head><body><main class="scan-stage"><img class="scan-art" src="./assets/screen05-scanner.webp" alt="Scan QR" fetchpriority="high" decoding="async"><a id="back" class="scan-back-hotspot" href="./screen04.html" aria-label="Back"></a><div class="camera-window"><video id="video" playsinline webkit-playsinline muted></video><div id="scanLine"></div></div><button id="open" type="button" class="scan-open-hotspot" aria-label="Open camera" onclick="window.__barameelOpenCamera(event)"><span class="sr-only">Open camera and scan QR</span></button><input id="cameraFallback" type="file" accept="image/*" capture="environment" hidden><canvas id="scanCanvas" width="640" height="480" hidden></canvas><div id="msg" class="scan-message" aria-live="polite"></div><div id="flash" class="success-flash"></div></main><script src="./app.js?v=20260926-4"></script><script>
+window.__barameelOpenCamera=function(ev){
+  if(ev){ev.preventDefault();ev.stopPropagation();}
+  try{ if(window.BR&&BR.play) BR.play('tap'); }catch(e){}
+  const btn=document.getElementById('open'); if(btn) btn.disabled=true;
+  const run=window.__barameelStartCamera;
+  if(typeof run==='function'){ run(); return false; }
+  const input=document.getElementById('cameraFallback');
+  if(input){ try{input.click();}catch(e){} }
+  return false;
+};
+const video=document.getElementById('video'),msg=document.getElementById('msg'),flash=document.getElementById('flash'),canvas=document.getElementById('scanCanvas'),ctx=canvas.getContext('2d',{willReadFrequently:true}),openBtn=document.getElementById('open'),fileInput=document.getElementById('cameraFallback');
+let stream=null,detector=null,raf=0,locked=false,lastFrame=0,scanMode='none';
 const status=t=>{msg.textContent=t||'';msg.classList.toggle('show',!!t)};
-function stop(){cancelAnimationFrame(raf);raf=0;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}video.pause();video.srcObject=null;video.style.display='none';document.getElementById('scanLine').classList.remove('on');detector=null}
+function stop(){cancelAnimationFrame(raf);raf=0;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}video.pause();video.srcObject=null;video.style.display='none';document.getElementById('scanLine').classList.remove('on');detector=null;scanMode='none'}
 function supportedCamera(){return !!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)}
-async function prepareDetector(){
-  detector=null;scanMode='fallback';
-  if('BarcodeDetector' in window){
-    try{const formats=await BarcodeDetector.getSupportedFormats();if(formats.includes('qr_code')){detector=new BarcodeDetector({formats:['qr_code']});scanMode='native';return}}catch(e){}
-  }
-  if(typeof window.jsQR==='function')scanMode='jsqr';
-}
+async function prepareDetector(){detector=null;scanMode='none';if('BarcodeDetector' in window){try{const formats=await BarcodeDetector.getSupportedFormats();if(formats.includes('qr_code')){detector=new BarcodeDetector({formats:['qr_code']});scanMode='native';return}}catch(e){}}if(typeof window.jsQR==='function')scanMode='jsqr'}
 async function start(){
   if(locked||stream)return;
-  status('');
-  if(!window.isSecureContext){status('CAMERA NEEDS HTTPS');BR.play('error');return}
-  if(!supportedCamera()){status('CAMERA IS NOT AVAILABLE IN THIS BROWSER');BR.play('error');return}
+  status('OPENING CAMERA…');
+  if(!window.isSecureContext){status('OPEN THIS PAGE ON HTTPS TO USE CAMERA');BR.play('error');return}
+  if(!supportedCamera()){status('OPENING DEVICE CAMERA…');BR.play('scan');try{fileInput.click()}catch(e){}return}
   try{
-    // Camera permission/opening happens first. QR detector support must never block the camera.
     stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});
-    video.srcObject=stream;
-    await video.play();
-    video.style.display='block';
-    document.getElementById('scanLine').classList.add('on');
-    BR.play('scan');
+    video.srcObject=stream;video.muted=true;video.setAttribute('playsinline','');video.setAttribute('webkit-playsinline','');
+    await video.play();video.style.display='block';document.getElementById('scanLine').classList.add('on');BR.play('scan');
     await prepareDetector();
-    if(scanMode==='native')status('POINT YOUR CAMERA AT THE QR');
-    else if(scanMode==='jsqr')status('POINT YOUR CAMERA AT THE QR');
-    else status('CAMERA ACTIVE');
+    status(scanMode==='none'?'CAMERA ACTIVE — POINT AT THE QR':'POINT YOUR CAMERA AT THE QR');
     loop();
   }catch(e){
     stop();
-    const m=e?.name==='NotAllowedError'?'ALLOW CAMERA ACCESS':e?.name==='NotFoundError'?'NO CAMERA FOUND':'CAMERA COULD NOT OPEN';
+    const n=e?.name||'';const m=n==='NotAllowedError'?'ALLOW CAMERA ACCESS IN YOUR BROWSER':n==='NotFoundError'?'NO CAMERA FOUND':n==='NotReadableError'?'CAMERA IS BUSY — CLOSE OTHER CAMERA APPS':'CAMERA COULD NOT OPEN';
     status(m);BR.play('error');
   }
 }
 async function loop(){
-  if(!stream||locked)return;
-  const now=performance.now();
-  if(now-lastFrame<120){raf=requestAnimationFrame(loop);return}
-  lastFrame=now;
-  try{
-    if(detector){
-      const codes=await detector.detect(video);
-      if(codes?.length){await handle(codes[0].rawValue||'');return}
-    }else if(typeof window.jsQR==='function'&&video.readyState>=2){
-      const w=video.videoWidth||640,h=video.videoHeight||480;
-      canvas.width=w;canvas.height=h;ctx.drawImage(video,0,0,w,h);
-      const image=ctx.getImageData(0,0,w,h),code=window.jsQR(image.data,image.width,image.height,{inversionAttempts:'dontInvert'});
-      if(code?.data){await handle(code.data);return}
-    }
-  }catch(e){}
+  if(!stream||locked)return;const now=performance.now();if(now-lastFrame<140){raf=requestAnimationFrame(loop);return}lastFrame=now;
+  try{if(detector){const codes=await detector.detect(video);if(codes?.length){await handle(codes[0].rawValue||'');return}}else if(typeof window.jsQR==='function'&&video.readyState>=2){const w=video.videoWidth||640,h=video.videoHeight||480;canvas.width=w;canvas.height=h;ctx.drawImage(video,0,0,w,h);const image=ctx.getImageData(0,0,w,h),code=window.jsQR(image.data,image.width,image.height,{inversionAttempts:'attemptBoth'});if(code?.data){await handle(code.data);return}}}catch(e){}
   raf=requestAnimationFrame(loop)
 }
-async function handle(raw){
-  if(locked)return;
-  const p=BR.parseQR(raw);
-  if(!p){BR.play('error');status('INVALID BARAMEEL QR');return}
-  locked=true;stop();
-  try{
-    const cfg=await BR.fetchCollection(p.collection),im=cfg.images.find(x=>x.imageId===p.image),piece=im?.pieces.find(x=>Number(x.piece_number)===Number(p.piece));
-    if(!im||!piece)throw Error('unknown');
-    const fresh=BR.collect(p.collection,p.image,p.piece),points=fresh?Number(piece.points||0):0;
-    if(points)BR.addPoints(points);
-    const reward={collection:p.collection,image:p.image,piece:Number(p.piece),points,duplicate:!fresh,raw,at:Date.now(),imageNumber:im.imageNumber};
-    BR.setLastReward(reward);localStorage.setItem('barameelLastQR',JSON.stringify(reward));
-    if(fresh)BR.rewardTransition(reward);else BR.play('tap');
-    flash.classList.remove('on');void flash.offsetWidth;flash.classList.add('on');
-    setTimeout(()=>BR.go(`screen06.html?collection=${encodeURIComponent(p.collection)}&image=${encodeURIComponent(p.image)}&piece=${p.piece}`),700)
-  }catch(e){locked=false;status('QR NOT IN COLLECTION');BR.play('error');}
-}
-document.getElementById('open').addEventListener('click',start,{passive:true});
-// The visible back control is also a real link, so navigation still works if JS/audio is unavailable.
-document.getElementById('back').addEventListener('click',e=>{e.preventDefault();stop();BR.goAfter('screen04.html','back',180)});
+async function handle(raw){if(locked)return;const p=BR.parseQR(raw);if(!p){BR.play('error');status('INVALID BARAMEEL QR');return}locked=true;stop();try{const cfg=await BR.fetchCollection(p.collection),im=cfg.images.find(x=>x.imageId===p.image),piece=im?.pieces.find(x=>Number(x.piece_number)===Number(p.piece));if(!im||!piece)throw Error('unknown');const fresh=BR.collect(p.collection,p.image,p.piece),points=fresh?Number(piece.points||0):0;if(points)BR.addPoints(points);const reward={collection:p.collection,image:p.image,piece:Number(p.piece),points,duplicate:!fresh,raw,at:Date.now(),imageNumber:im.imageNumber};BR.setLastReward(reward);localStorage.setItem('barameelLastQR',JSON.stringify(reward));if(fresh)BR.rewardTransition(reward);else BR.play('tap');flash.classList.remove('on');void flash.offsetWidth;flash.classList.add('on');setTimeout(()=>BR.go(`screen06.html?collection=${encodeURIComponent(p.collection)}&image=${encodeURIComponent(p.image)}&piece=${p.piece}`),700)}catch(e){locked=false;status('QR NOT IN COLLECTION');BR.play('error')}}
+window.__barameelStartCamera=start;
+openBtn.addEventListener('pointerdown',e=>{e.preventDefault();start()},{passive:false});openBtn.addEventListener('click',e=>{e.preventDefault();start()});
+document.getElementById('back').addEventListener('pointerdown',e=>{BR.play('back')},{passive:true});document.getElementById('back').addEventListener('click',e=>{e.preventDefault();stop();BR.goAfter('screen04.html','back',420)});
+fileInput.addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{const img=new Image();img.onload=async()=>{canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;ctx.drawImage(img,0,0);if(typeof window.jsQR==='function'){const data=ctx.getImageData(0,0,canvas.width,canvas.height),code=window.jsQR(data.data,data.width,data.height,{inversionAttempts:'attemptBoth'});if(code?.data){await handle(code.data);return}}status('QR NOT FOUND IN PHOTO');BR.play('error')};img.src=URL.createObjectURL(f)}catch(e){status('QR PHOTO COULD NOT BE READ');BR.play('error')}});
 window.addEventListener('pagehide',stop);
-</script><script src="./register-sw.js"></script></body></html>
+</script><script src="./register-sw.js?v=20260926-4"></script></body></html>

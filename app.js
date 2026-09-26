@@ -18,9 +18,9 @@ function hasPiece(c,image,p){return pieces(c,image).includes(Number(p))}
 function selected(){return state.runner||"brona"}
 function setLastReward(r){state.lastReward=r;save()}
 
-/* BARAMEEL RUN ARCADE AUDIO
-   Local assets are the primary sound source. WebAudio remains as a fallback so
-   a missing/blocked asset never makes a control feel dead. */
+/* BARAMEEL RUN ARCADE AUDIO — v3
+   Audio is explicitly unlocked on the first real user gesture, then played from
+   local WAV assets. WebAudio is retained as a guaranteed local fallback. */
 const SOUND_FILES={
   tap:"./audio/tap.wav",
   select:"./audio/select.wav",
@@ -30,44 +30,77 @@ const SOUND_FILES={
   error:"./audio/error.wav"
 };
 const soundBank={};
-function audioCtx(){
-  if(!audioCtx.ctx){
+let soundUnlocked=false;
+let soundPrimed=false;
+function getAudioContext(){
+  if(!getAudioContext.ctx){
     const C=window.AudioContext||window.webkitAudioContext;
     if(!C)return null;
-    audioCtx.ctx=new C();
-    audioCtx.master=audioCtx.ctx.createGain();
-    audioCtx.master.gain.value=.72;
-    audioCtx.master.connect(audioCtx.ctx.destination);
+    getAudioContext.ctx=new C();
+    getAudioContext.master=getAudioContext.ctx.createGain();
+    getAudioContext.master.gain.value=.78;
+    getAudioContext.master.connect(getAudioContext.ctx.destination);
   }
-  if(audioCtx.ctx.state==='suspended')audioCtx.ctx.resume().catch(()=>{});
-  return audioCtx.ctx;
+  return getAudioContext.ctx;
 }
+function unlockAudio(){
+  const c=getAudioContext();
+  if(c){
+    try{if(c.state==='suspended')c.resume();}catch(e){}
+    // A silent one-sample source makes the unlock explicit on Safari/iOS.
+    try{
+      const b=c.createBuffer(1,1,c.sampleRate),o=c.createBufferSource();
+      o.buffer=b;o.connect(c.destination);o.start(0);
+    }catch(e){}
+  }
+  Object.values(soundBank).forEach(a=>{try{a.muted=true;const p=a.play();if(p?.then)p.then(()=>{a.pause();a.currentTime=0;a.muted=false}).catch(()=>{a.muted=false})}catch(e){a.muted=false}});
+  soundUnlocked=true;
+}
+function ensureGestureAudio(){if(!soundUnlocked)unlockAudio()}
 function tone(freq,d=.1,type='square',gain=.22,delay=0){
-  const c=audioCtx();if(!c)return;
+  const c=getAudioContext();if(!c)return;
+  try{if(c.state==='suspended')c.resume()}catch(e){}
   const o=c.createOscillator(),g=c.createGain();
   o.type=type;o.frequency.value=freq;
-  g.gain.setValueAtTime(.0001,c.currentTime+delay);
-  g.gain.exponentialRampToValueAtTime(gain,c.currentTime+delay+.008);
-  g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+delay+d);
-  o.connect(g);g.connect(audioCtx.master);
-  o.start(c.currentTime+delay);o.stop(c.currentTime+delay+d+.02);
+  const t=c.currentTime+delay;
+  g.gain.setValueAtTime(.0001,t);
+  g.gain.exponentialRampToValueAtTime(gain,t+.008);
+  g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.connect(g);g.connect(getAudioContext.master);
+  o.start(t);o.stop(t+d+.02);
 }
 function fallbackSound(type){
-  if(type==='back'){tone(659,.08,'square',.25);tone(523,.10,'square',.22,.08);tone(392,.12,'triangle',.18,.18);return}
-  if(type==='error'){tone(220,.10,'sawtooth',.28);tone(170,.11,'sawtooth',.3,.10);tone(120,.16,'square',.25,.21);return}
-  if(type==='scan'){[660,880,1175,1568].forEach((f,i)=>tone(f,.06,'square',.24,i*.06));return}
-  if(type==='confirm'){[523,659,784,1047,1568].forEach((f,i)=>tone(f,.07,'square',.27,i*.055));return}
-  if(type==='select'){[392,523,659,988,1319].forEach((f,i)=>tone(f,.065,i<4?'square':'triangle',.25,i*.05));return}
+  if(type==='back'){tone(659,.07,'square',.25);tone(523,.09,'square',.22,.07);tone(392,.12,'triangle',.18,.16);return}
+  if(type==='error'){tone(220,.09,'sawtooth',.28);tone(170,.10,'sawtooth',.3,.09);tone(120,.15,'square',.25,.19);return}
+  if(type==='scan'){[660,880,1175,1568].forEach((f,i)=>tone(f,.055,'square',.24,i*.055));return}
+  if(type==='confirm'){[523,659,784,1047,1568].forEach((f,i)=>tone(f,.065,'square',.27,i*.05));return}
+  if(type==='select'){[392,523,659,988,1319].forEach((f,i)=>tone(f,.06,i<4?'square':'triangle',.25,i*.045));return}
   tone(720,.055,'square',.23);tone(980,.045,'square',.18,.055);
 }
-function primeSounds(){Object.entries(SOUND_FILES).forEach(([name,src])=>{const a=new Audio(src);a.preload='auto';a.playsInline=true;soundBank[name]=a})}
+function primeSounds(){
+  if(soundPrimed)return;
+  soundPrimed=true;
+  Object.entries(SOUND_FILES).forEach(([name,src])=>{
+    const a=new Audio();a.src=src;a.preload='auto';a.playsInline=true;a.setAttribute('playsinline','');a.crossOrigin='anonymous';soundBank[name]=a;
+    try{a.load()}catch(e){}
+  });
+}
 function play(type){
+  primeSounds();
+  ensureGestureAudio();
   const a=soundBank[type];
-  if(a){try{a.currentTime=0;const p=a.play();if(p?.catch)p.catch(()=>fallbackSound(type));return a}catch(e){fallbackSound(type);return null}}
-  fallbackSound(type);return null;
+  if(!a || a.readyState < 2){ fallbackSound(type); return null; }
+  try{
+    a.muted=false; a.volume=.92; a.currentTime=0;
+    const p=a.play();
+    if(p?.catch) p.catch(()=>fallbackSound(type));
+    return a;
+  }catch(e){ fallbackSound(type); return null; }
 }
 primeSounds();
-function playRewardFrom(offset=0){let a=document.getElementById('rewardAudio');if(!a){a=document.createElement('audio');a.id='rewardAudio';a.src='./audio/reward-levelup.mp3';a.preload='auto';a.style.display='none';document.body.appendChild(a)}a.currentTime=Math.max(0,offset);a.volume=.9;const p=a.play();p?.catch(()=>{});return a}
+['pointerdown','touchstart','mousedown','keydown'].forEach(ev=>window.addEventListener(ev,ensureGestureAudio,{once:true,capture:true,passive:true}));
+
+function playRewardFrom(offset=0){ensureGestureAudio();let a=document.getElementById('rewardAudio');if(!a){a=document.createElement('audio');a.id='rewardAudio';a.src='./audio/reward-levelup.mp3';a.preload='auto';a.style.display='none';document.body.appendChild(a)}a.currentTime=Math.max(0,offset);a.volume=.9;const p=a.play();p?.catch(()=>{});return a}
 
 /* Bright, isolated selection flash. It never filters/dims the page artwork. */
 function flash(){
