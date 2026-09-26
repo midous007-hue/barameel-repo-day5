@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#061f27"><title>BARAMEEL RUN — Scan QR</title><link rel="stylesheet" href="./styles.css?v=20260927-10"></head><body><main class="scan-stage"><img class="scan-art" src="./assets/screen05-scanner.webp" alt="Scan QR" fetchpriority="high" decoding="async"><a id="back" class="scan-back-hotspot" href="./screen04.html" aria-label="Back"></a><div class="camera-window" id="cameraWindow"><video id="video" playsinline webkit-playsinline muted autoplay></video><div id="scanLine"></div></div><button id="open" type="button" class="scan-open-hotspot" aria-label="Open camera"><span class="sr-only">Open camera and scan QR</span></button><canvas id="scanCanvas" width="640" height="480" hidden></canvas><div id="msg" class="scan-message" aria-live="polite"></div><div id="flash" class="success-flash" aria-hidden="true"></div></main><script src="./app.js?v=20260927-10"></script><script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#061f27"><title>BARAMEEL RUN — Scan QR</title><link rel="stylesheet" href="./styles.css?v=20260927-11"><link rel="preload" as="image" href="./assets/screen06-puzzle.webp"></head><body><main class="scan-stage"><img class="scan-art" src="./assets/screen05-scanner.webp" alt="Scan QR" fetchpriority="high" decoding="async"><a id="back" class="scan-back-hotspot" href="./screen04.html" aria-label="Back"></a><div class="camera-window" id="cameraWindow"><video id="video" playsinline webkit-playsinline muted autoplay></video><div id="scanLine"></div><div id="flash" class="success-flash" aria-hidden="true"></div></div><button id="open" type="button" class="scan-open-hotspot" aria-label="Open camera"><span class="sr-only">Open camera and scan QR</span></button><canvas id="scanCanvas" width="640" height="480" hidden></canvas><div id="msg" class="scan-message" aria-live="polite"></div></main><script src="./app.js?v=20260927-11"></script><script>
 (function(){
   const video=document.getElementById('video'),msg=document.getElementById('msg'),flash=document.getElementById('flash'),canvas=document.getElementById('scanCanvas'),ctx=canvas.getContext('2d',{willReadFrequently:true}),openBtn=document.getElementById('open'),back=document.getElementById('back'),scanLine=document.getElementById('scanLine');
   let stream=null,detector=null,raf=0,locked=false,lastFrame=0,starting=false,qrLoading=false;
@@ -56,7 +56,7 @@
       if(!im||!piece)throw Error('unknown');
       const fresh=BR.collect(p.collection,p.image,p.piece),points=fresh?Number(piece.points||0):0;if(points)BR.addPoints(points);
       const reward={collection:p.collection,image:p.image,piece:Number(p.piece),points,duplicate:!fresh,raw,at:Date.now(),imageNumber:im.imageNumber};BR.setLastReward(reward);localStorage.setItem('barameelLastQR',JSON.stringify(reward));if(fresh)BR.rewardTransition(reward);else BR.play('tap');
-      flash.classList.remove('on');void flash.offsetWidth;flash.classList.add('on');setTimeout(()=>BR.go(`screen06.html?collection=${encodeURIComponent(p.collection)}&image=${encodeURIComponent(p.image)}&piece=${p.piece}`),520);
+      flash.classList.remove('on');void flash.offsetWidth;flash.classList.add('on');setTimeout(()=>BR.go(`screen06.html?collection=${encodeURIComponent(p.collection)}&image=${encodeURIComponent(p.image)}&piece=${p.piece}`),260);
     }catch(e){locked=false;status('QR NOT IN COLLECTION');try{BR.play('error')}catch(x){}}
   }
   openBtn.addEventListener('click',e=>{e.preventDefault();start()});
@@ -64,4 +64,4 @@
   window.addEventListener('pagehide',stop);
   window.addEventListener('resize',()=>{if(stream)resizeCanvas()});
 })();
-</script><script src="./register-sw.js?v=20260927-10"></script></body></html>
+</script><script src="./register-sw.js?v=20260927-11"></script></body></html>

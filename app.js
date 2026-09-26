@@ -39,7 +39,8 @@ const SOUND_FILES={
   confirm:"./audio/confirm.wav",
   back:"./audio/back.wav",
   scan:"./audio/scan.wav",
-  error:"./audio/error.wav"
+  error:"./audio/error.wav",
+  completion:"./audio/completion-arcade.wav"
 };
 const soundBank={};
 let soundUnlocked=false;
@@ -135,7 +136,9 @@ function playPointsCountUp(amount,duration=2200){
   tone(1568,.12,'triangle',.23,Math.max(0,(duration-20)/1000));
 }
 function playCompletionSound(){
-  ensureGestureAudio();
+  ensureGestureAudio();primeSounds();
+  const a=soundBank.completion;
+  if(a){try{a.currentTime=0;a.volume=.95;const p=a.play();if(p?.then)p.catch(()=>{});return a}catch(e){}}
   [523,659,784,1047,1319,1568].forEach((f,i)=>tone(f,.11,i<5?'square':'triangle',.24,i*.09));
   tone(2093,.18,'triangle',.22,.62);
 }
@@ -151,10 +154,17 @@ function goAfter(url,type,delay=180){play(type);window.setTimeout(()=>go(url),de
 function preload(src){const im=new Image();im.decoding='async';im.src=src;return im}
 function idle(fn){(window.requestIdleCallback||((cb)=>setTimeout(cb,350)))(fn,{timeout:1200})}
 function preloadAll(list){let i=0;const next=()=>{if(i>=list.length)return;preload(list[i++]);idle(next)};next()}
+const collectionMemory={};
 async function fetchCollection(id='collection01'){
-  const r=await fetch(`./assets/collections/${id}/collection.json`,{cache:'no-store'});
+  if(collectionMemory[id])return collectionMemory[id];
+  const key=`barameelCollection:${id}`;
+  try{const cached=sessionStorage.getItem(key);if(cached){const data=JSON.parse(cached);collectionMemory[id]=data;return data}}catch(e){}
+  const r=await fetch(`./assets/collections/${id}/collection.json`,{cache:'force-cache'});
   if(!r.ok)throw Error('Collection data unavailable');
-  return r.json();
+  const data=await r.json();
+  collectionMemory[id]=data;
+  try{sessionStorage.setItem(key,JSON.stringify(data))}catch(e){}
+  return data;
 }
 function parseQR(raw){
   const s=decodeURIComponent(String(raw||'')).trim();

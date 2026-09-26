@@ -43,3 +43,17 @@
 .checkpoint-dots{left:64.1%;top:67.0%;width:25.5%;height:3.2%}
 .checkpoint-value{left:63.5%;top:70.0%;width:27%;height:4.0%}
 .rewards-runner-name{display:none}
+/* V11 precision/final polish */
+.camera-window .success-flash{position:absolute;inset:0;z-index:15;border:0;border-radius:0;background:radial-gradient(circle at 50% 50%,rgba(247,189,39,.40) 0%,rgba(247,189,39,.16) 38%,rgba(247,189,39,0) 76%);mix-blend-mode:screen}
+.camera-window .success-flash.on{animation:cameraSuccessPulse .28s ease-out both}
+@keyframes cameraSuccessPulse{0%{opacity:0;transform:scale(.94)}32%{opacity:.72;transform:scale(1)}100%{opacity:0;transform:scale(1.04)}}
+.reward-text{pointer-events:auto;cursor:pointer;left:49.1%;top:55.55%;width:43.2%;height:5.9%;font-family:Impact,"Arial Black",sans-serif;font-size:clamp(20px,5.4vw,47px);font-style:italic;font-weight:900;letter-spacing:-.035em;color:#ffd447;text-shadow:2px 2px 0 #9c1e12,-2px -2px 0 #fff1a8,0 0 9px rgba(247,189,39,.82);transform:rotate(-6deg);}
+.thumb-index{z-index:20;width:25.5%;left:.5%;top:-1.5%;border:2px solid #071a20;box-shadow:0 0 0 1.5px #f7ecd5,0 2px 5px rgba(0,0,0,.65);font-size:clamp(10px,2.9vw,24px)}
+.thumb-grid{z-index:2}
+.collection-thumb .thumb-index{pointer-events:none}
+.rewards-row-hotspots{position:absolute;inset:0;z-index:24;pointer-events:none}
+.rewards-row-hotspot{position:absolute;border:0;background:transparent;padding:0;pointer-events:auto;touch-action:manipulation}
+.rewards-row-hotspot.points-row{left:53%;top:43.7%;width:43%;height:8.3%}
+.rewards-row-hotspot.rank-row{left:53%;top:51.8%;width:43%;height:8.3%}
+.rewards-row-hotspot.weekly-row{left:53%;top:59.0%;width:43%;height:8.3%}
+.rewards-row-hotspot.checkpoint-row{left:53%;top:66.8%;width:43%;height:8.8%}
