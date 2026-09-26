@@ -18,7 +18,7 @@ function hasPiece(c,image,p){return pieces(c,image).includes(Number(p))}
 function selected(){return state.runner||"brona"}
 function setLastReward(r){state.lastReward=r;save()}
 
-/* BARAMEEL RUN ARCADE AUDIO — v5
+/* BARAMEEL RUN ARCADE AUDIO — v7
    Audio is explicitly unlocked on the first real user gesture, then played from
    local WAV assets. WebAudio is retained as a guaranteed local fallback. */
 const SOUND_FILES={
