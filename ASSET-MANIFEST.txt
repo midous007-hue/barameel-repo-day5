@@ -1,0 +1,31 @@
+BARAMEEL RUN — REQUIRED ASSETS
+
+ROOT /assets
+- screen01-start.webp [included]
+- screen05-scanner.webp [included]
+- screen06-puzzle.webp [included]
+- screen02-brona.png [UPLOAD]
+- screen02-chiller.png [UPLOAD]
+- screen02-dreamer.png [UPLOAD]
+- screen02-racer.png [UPLOAD]
+- screen02-rookie.png [UPLOAD]
+- screen02-skater.png [UPLOAD]
+- screen03-brona.png [UPLOAD]
+- screen03-chiller.png [UPLOAD]
+- screen03-dreamer.png [UPLOAD]
+- screen03-racer.png [UPLOAD]
+- screen03-rookie.png [UPLOAD]
+- screen03-skater.png [UPLOAD]
+- screen04-brona.png [UPLOAD]
+- screen04-chiller.png [UPLOAD]
+- screen04-dreamer.png [UPLOAD]
+- screen04-racer.png [UPLOAD]
+- screen04-rookie.png [UPLOAD]
+- screen04-skater.png [UPLOAD]
+
+COLLECTION
+/assets/collections/collection01/collection.json [included]
+/assets/collections/collection01/masters/image01-master.png ... image10-master.png [UPLOAD]
+/assets/collections/collection01/qr-codes/image01-piece01.png ... image10-piece09.png [included]
+
+No separate 90 puzzle-piece images are required. The browser uses each master image as a 3x3 source and reveals only the collected cells.
