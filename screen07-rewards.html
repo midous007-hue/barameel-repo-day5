@@ -1,14 +1,20 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><title>BARAMEEL RUN — My Rewards</title><link rel="stylesheet" href="./styles.css?v=20260927-9"></head><body><main class="rewards-stage"><img id="runnerArt" class="rewards-art" alt="My runner"><div class="rewards-overlay"></div><button id="back" class="rewards-back" type="button" aria-label="Back"></button><section class="rewards-panel" aria-label="My rewards"><div class="rewards-kicker">MY REWARDS</div><div id="runnerName" class="rewards-runner">BRONA</div><div class="reward-stat"><span class="stat-label">TOTAL POINTS</span><strong id="points">0</strong></div><div class="reward-stat"><span class="stat-label">CHECKPOINTS</span><strong id="checkpoints">0</strong></div><div class="reward-stat"><span class="stat-label">WEEKLY POINTS</span><strong id="weekly">0</strong></div><div class="rewards-progress"><div id="progressFill"></div></div><div id="recent" class="rewards-recent">SCAN A QR TO EARN REWARDS</div><button id="scan" class="rewards-action" type="button">SCAN MORE QR</button></section></main><script src="./app.js?v=20260927-9"></script><script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#061f27"><title>BARAMEEL RUN — My Rewards</title><link rel="stylesheet" href="./styles.css?v=20260927-10"></head><body><main class="rewards-stage rewards-artwork-stage"><img id="rewardsArt" class="rewards-art" src="./assets/screen07-rewards.webp" alt="My Rewards" fetchpriority="high" decoding="async"><div class="rewards-hotspots"><button id="back" class="rewards-back" type="button" aria-label="Back"></button><button id="scan" class="rewards-scan-hotspot" type="button" aria-label="Scan QR"></button><button id="settings" class="rewards-settings-hotspot" type="button" aria-label="Settings"></button></div>
+<div id="rewardPoints" class="rewards-value points-value"></div><div id="rewardRank" class="rewards-value rank-value"></div><div id="rewardWeekly" class="rewards-value weekly-value"></div><div id="checkpointDots" class="checkpoint-dots" aria-hidden="true"></div><div id="rewardCheckpointCount" class="rewards-value checkpoint-value"></div>
+</main><script src="./app.js?v=20260927-10"></script><script>
 (()=>{
- const art=document.getElementById('runnerArt'),runner=BR.selected(),name=document.getElementById('runnerName');
- const files=[`./assets/screen03-${runner}.png`,`./assets/screen02-${runner}.png`,`./assets/screen01-start.webp`];let i=0;function loadNext(){if(i>=files.length)return;art.onerror=()=>{i++;loadNext()};art.src=files[i++]};loadNext();
- name.textContent=BR.RUNNER_NAMES[runner]||runner.toUpperCase();
- document.getElementById('points').textContent=Number(BR.state.points||0).toLocaleString();
- document.getElementById('weekly').textContent=Number(BR.state.weeklyPoints||0).toLocaleString();
- document.getElementById('checkpoints').textContent=String(BR.checkpointCount());
- const progress=Math.min(100,(BR.checkpointCount()/90)*100);document.getElementById('progressFill').style.width=progress+'%';
- const r=BR.state.lastReward;if(r&&!r.duplicate&&r.points){document.getElementById('recent').textContent=`LAST QR • +${Number(r.points).toLocaleString()} POINTS • IMAGE ${String(r.imageNumber||'').padStart(2,'0')} • PIECE ${String(r.piece).padStart(2,'0')}`}
+ const fmt=n=>Number(n||0).toLocaleString();
+ const runner=BR.selected();
+ document.getElementById('rewardPoints').textContent=fmt(BR.state.points);
+ document.getElementById('rewardWeekly').textContent=fmt(BR.state.weeklyPoints);
+ const cp=BR.checkpointCount();
+ document.getElementById('rewardCheckpointCount').textContent=`${cp} / 90`;
+ // Six visible milestone dots = 15 collected QR pieces per milestone.
+ const dots=document.getElementById('checkpointDots');
+ for(let i=0;i<6;i++){const d=document.createElement('span');d.className='checkpoint-dot'+(cp>=(i+1)*15?' on':'');dots.appendChild(d)}
+ // Rank is intentionally shown only when the state already contains one; no invented ranking logic.
+ if(BR.state.rank!=null)document.getElementById('rewardRank').textContent=String(BR.state.rank);
  document.getElementById('back').onclick=()=>BR.goAfter('screen06.html','back',180);
  document.getElementById('scan').onclick=()=>BR.goAfter('screen05.html','scan',220);
+ document.getElementById('settings').onclick=()=>BR.play('tap');
 })();
-</script><script src="./register-sw.js?v=20260927-9"></script></body></html>
+</script><script src="./register-sw.js?v=20260927-10"></script></body></html>
