@@ -1,60 +1,64 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><title>BARAMEEL RUN — ALEXANDRIA Collection</title><link rel="stylesheet" href="./styles.css?v=20260927-8"></head><body><main class="collection-stage"><img id="art" class="collection-art" src="./assets/screen06-puzzle.webp" alt="ALEXANDRIA Collection" fetchpriority="high" decoding="async"><button id="back" class="collection-back" aria-label="Back"></button><select id="select" class="collection-select" aria-label="Choose collection"><option value="collection01">ALEXANDRIA</option></select><div id="heroGrid" class="hero-grid"></div><div id="reward" class="reward-text"></div><div id="rewardSub" class="reward-sub"></div><div class="collection-actions" aria-label="Collection actions"><button id="scanMore" class="collection-action scan-more" type="button"><span class="action-icon">↻</span><span>SCAN MORE QR</span></button><button id="myRewards" class="collection-action my-rewards" type="button"><span class="action-icon">★</span><span>MY REWARDS</span></button></div><div id="thumbs" class="collection-thumbs"></div><div id="completeFlash" class="complete-flash" aria-hidden="true"></div></main><script src="./app.js?v=20260927-8"></script><script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><title>BARAMEEL RUN — ALEXANDRIA Collection</title><link rel="stylesheet" href="./styles.css?v=20260927-9"></head><body><main class="collection-stage"><img id="art" class="collection-art" src="./assets/screen06-puzzle.webp" alt="ALEXANDRIA Collection" fetchpriority="high" decoding="async"><button id="back" class="collection-back" aria-label="Back"></button><select id="select" class="collection-select" aria-label="Choose collection"><option value="collection01">ALEXANDRIA</option></select><div id="heroGrid" class="hero-grid"></div><div id="reward" class="reward-text"></div><div id="rewardSub" class="reward-sub"></div><div class="collection-actions" aria-label="Collection actions"><button id="myRewards" class="collection-action my-rewards" type="button" aria-label="My Rewards"></button><button id="scanMore" class="collection-action scan-more" type="button" aria-label="Scan More QR"></button></div><div id="thumbs" class="collection-thumbs"></div><div id="completeFlash" class="complete-flash" aria-hidden="true"></div></main><script src="./app.js?v=20260927-9"></script><script>
 (async()=>{
-const params=new URLSearchParams(location.search),collection=params.get('collection')||'collection01',selected=params.get('image')||'image01';let cfg;try{cfg=await BR.fetchCollection(collection)}catch(e){return}
-const art=document.getElementById('art'),hero=document.getElementById('heroGrid'),thumbs=document.getElementById('thumbs'),reward=document.getElementById('reward'),sub=document.getElementById('rewardSub');let current=cfg.images.find(x=>x.imageId===selected)||cfg.images[0];
-function crop(cell,piece,master){cell.style.backgroundImage=`url("./${master}")`;cell.style.backgroundSize='300% 300%';cell.style.backgroundPosition=`${(piece.column-1)*50}% ${(piece.row-1)*50}%`;}
-function renderHero(){
-  hero.innerHTML='';hero.classList.remove('completed');
-  const complete=BR.count(collection,current.imageId)===9;
-  if(complete){
-    const img=document.createElement('img');img.className='completed-image';img.alt=current.displayName;img.src=`./${current.masterFile}`;img.onerror=()=>{hero.classList.remove('completed');renderPiecesOnly()};
-    hero.classList.add('completed');hero.appendChild(img);
-    const sheen=document.createElement('div');sheen.className='completion-sheen';hero.appendChild(sheen);
-    return;
-  }
-  renderPiecesOnly();
-}
-function renderPiecesOnly(){
-  hero.innerHTML='';hero.classList.remove('completed');
-  for(let n=1;n<=9;n++){const p=current.pieces[n-1],cell=document.createElement('div');cell.className='hero-piece';if(BR.hasPiece(collection,current.imageId,n))crop(cell,p,current.masterFile);hero.appendChild(cell)}
-}
-function thumbGrid(im,index){
-  const wrap=document.createElement('button');wrap.type='button';wrap.className='collection-thumb';wrap.dataset.image=im.imageId;
-  const cardPositions=[
-    [2.52,69.28,18.65,11.55],[21.62,69.28,18.55,11.55],[40.98,69.28,18.55,11.55],[60.18,69.28,18.45,11.55],[79.35,69.28,18.55,11.55],
-    [2.52,83.18,18.65,9.85],[21.62,83.18,18.55,9.85],[40.98,83.18,18.55,9.85],[60.18,83.18,18.45,9.85],[79.35,83.18,18.55,9.85]
-  ];
-  const pos=cardPositions[index]||cardPositions[0];wrap.style.left=pos[0]+'%';wrap.style.top=pos[1]+'%';wrap.style.width=pos[2]+'%';wrap.style.height=pos[3]+'%';
-  const grid=document.createElement('div');grid.className='thumb-grid';
-  if(index>=5)grid.classList.add('thumb-grid-bottom');
-  for(let n=1;n<=9;n++){const p=im.pieces[n-1],c=document.createElement('span');c.className='thumb-piece';if(BR.hasPiece(collection,im.imageId,n))crop(c,p,im.masterFile);grid.appendChild(c)}
-  const count=document.createElement('span');count.className='thumb-count';count.textContent=`${BR.count(collection,im.imageId)}/9`;
-  wrap.append(grid,count);if(!BR.count(collection,im.imageId))wrap.classList.add('locked');wrap.onclick=()=>{current=im;render()};return wrap
-}
-function renderThumbs(){thumbs.innerHTML='';cfg.images.forEach((im,index)=>thumbs.appendChild(thumbGrid(im,index)))}
-function render(){renderHero();renderThumbs()}
-function rewardKey(r){return `${r.at||0}|${r.collection||''}|${r.image||''}|${r.piece||''}`}
-function animateReward(){
-  const r=BR.state.lastReward;if(!r||!r.points||r.duplicate)return;
-  sub.textContent='POINTS EARNED';
-  const amount=Number(r.points)||0,key=rewardKey(r),shown=localStorage.getItem('barameelRewardShownKey')===key;
-  if(shown){reward.textContent='+'+amount.toLocaleString()+' POINTS';return}
-  localStorage.setItem('barameelRewardShownKey',key);
-  const start=performance.now(),duration=2200;
-  BR.playPointsCountUp(amount,duration);
-  function tick(now){const t=Math.min(1,(now-start)/duration),e=1-Math.pow(1-t,3);reward.textContent='+'+Math.round(amount*e).toLocaleString()+' POINTS';reward.style.transform=`scale(${1+0.30*Math.sin(Math.min(1,t)*Math.PI)})`;if(t<1)requestAnimationFrame(tick);else{reward.textContent='+'+amount.toLocaleString()+' POINTS';setTimeout(()=>reward.style.transform='',300)}}requestAnimationFrame(tick)
-}
-function completeEffect(){
-  const r=BR.state.lastReward,justCompleted=BR.count(collection,current.imageId)===9 && r && r.image===current.imageId && !r.duplicate;
-  if(!justCompleted)return;
-  const key=rewardKey(r)+'|complete';if(localStorage.getItem('barameelCompletionShownKey')===key)return;
-  localStorage.setItem('barameelCompletionShownKey',key);
-  const f=document.getElementById('completeFlash');f.classList.remove('on');void document.body.offsetWidth;f.classList.add('on');BR.playCompletionSound();
-}
-render();animateReward();completeEffect();
-document.getElementById('back').onclick=()=>BR.goAfter('screen05.html','back',180);
-document.getElementById('scanMore').onclick=()=>BR.goAfter('screen05.html','scan',220);
-document.getElementById('myRewards').onclick=()=>BR.goAfter('screen07-rewards.html','confirm',260);
-document.getElementById('select').onchange=e=>{const im=cfg.images.find(x=>x.imageId===e.target.value);if(im){current=im;render()}};
+ const params=new URLSearchParams(location.search),collection=params.get('collection')||'collection01',selected=params.get('image')||'image01';let cfg;
+ try{cfg=await BR.fetchCollection(collection)}catch(e){return}
+ const hero=document.getElementById('heroGrid'),thumbs=document.getElementById('thumbs'),reward=document.getElementById('reward'),sub=document.getElementById('rewardSub');
+ let current=cfg.images.find(x=>x.imageId===selected)||cfg.images[0];
+ function crop(cell,piece,master){cell.style.backgroundImage=`url("./${master}")`;cell.style.backgroundSize='300% 300%';cell.style.backgroundPosition=`${(piece.column-1)*50}% ${(piece.row-1)*50}%`}
+ function renderHero(){
+   hero.innerHTML='';hero.classList.remove('completed');
+   const complete=BR.count(collection,current.imageId)===9;
+   if(complete){
+     const img=document.createElement('img');img.className='completed-image';img.alt=current.displayName;img.src=`./${current.masterFile}`;
+     img.onerror=()=>{hero.classList.remove('completed');renderPiecesOnly()};
+     hero.classList.add('completed');hero.appendChild(img);
+     const sheen=document.createElement('div');sheen.className='completion-sheen';hero.appendChild(sheen);return;
+   }
+   renderPiecesOnly();
+ }
+ function renderPiecesOnly(){
+   hero.innerHTML='';hero.classList.remove('completed');
+   for(let n=1;n<=9;n++){const p=current.pieces[n-1],cell=document.createElement('div');cell.className='hero-piece';if(BR.hasPiece(collection,current.imageId,n))crop(cell,p,current.masterFile);hero.appendChild(cell)}
+ }
+ const cardPositions=[
+   [2.62,71.07,18.24,11.83],[22.12,71.07,17.92,11.83],[41.19,71.07,17.92,11.83],[60.17,71.07,17.82,11.83],[79.35,71.07,18.24,11.83],
+   [2.62,83.38,18.24,12.07],[22.12,83.38,17.92,12.07],[41.19,83.38,17.92,12.07],[60.17,83.38,17.92,12.07],[79.35,83.38,18.24,12.07]
+ ];
+ function thumbGrid(im,index){
+   const wrap=document.createElement('button');wrap.type='button';wrap.className='collection-thumb';wrap.dataset.image=im.imageId;
+   const pos=cardPositions[index];wrap.style.left=pos[0]+'%';wrap.style.top=pos[1]+'%';wrap.style.width=pos[2]+'%';wrap.style.height=pos[3]+'%';
+   const grid=document.createElement('div');grid.className='thumb-grid';
+   for(let n=1;n<=9;n++){const p=im.pieces[n-1],c=document.createElement('span');c.className='thumb-piece';if(BR.hasPiece(collection,im.imageId,n))crop(c,p,im.masterFile);grid.appendChild(c)}
+   // The artwork already contains the “/9” suffix. Only draw the live numerator so it stays in front of the pieces.
+   const count=document.createElement('span');count.className='thumb-count';count.textContent=String(BR.count(collection,im.imageId));
+   wrap.append(grid,count);wrap.onclick=()=>{current=im;render()};return wrap
+ }
+ function renderThumbs(){thumbs.innerHTML='';cfg.images.forEach((im,index)=>thumbs.appendChild(thumbGrid(im,index)))}
+ function render(){renderHero();renderThumbs()}
+ function rewardKey(r){return `${r.at||0}|${r.collection||''}|${r.image||''}|${r.piece||''}`}
+ function animateReward(){
+   const r=BR.state.lastReward;if(!r||!r.points||r.duplicate)return;
+   sub.textContent='POINTS EARNED';const amount=Number(r.points)||0,key=rewardKey(r),shown=localStorage.getItem('barameelRewardShownKey')===key;
+   if(shown){reward.textContent='+'+amount.toLocaleString()+' POINTS';return}
+   localStorage.setItem('barameelRewardShownKey',key);
+   const start=performance.now(),duration=2300;BR.playPointsCountUp(amount,duration);
+   function tick(now){
+     const t=Math.min(1,(now-start)/duration),e=1-Math.pow(1-t,3);
+     reward.textContent='+'+Math.round(amount*e).toLocaleString()+' POINTS';
+     const pulse=Math.sin(Math.min(1,t)*Math.PI);reward.style.transform=`scale(${1+0.34*pulse})`;
+     if(t<1)requestAnimationFrame(tick);else{reward.textContent='+'+amount.toLocaleString()+' POINTS';setTimeout(()=>reward.style.transform='',280)}
+   }
+   requestAnimationFrame(tick)
+ }
+ function completeEffect(){
+   const r=BR.state.lastReward,justCompleted=BR.count(collection,current.imageId)===9&&r&&r.image===current.imageId&&!r.duplicate;
+   if(!justCompleted)return;const key=rewardKey(r)+'|complete';if(localStorage.getItem('barameelCompletionShownKey')===key)return;
+   localStorage.setItem('barameelCompletionShownKey',key);const f=document.getElementById('completeFlash');f.classList.remove('on');void document.body.offsetWidth;f.classList.add('on');BR.playCompletionSound()
+ }
+ render();animateReward();completeEffect();
+ document.getElementById('back').onclick=()=>BR.goAfter('screen05.html','back',180);
+ document.getElementById('myRewards').onclick=()=>BR.goAfter('screen07-rewards.html','confirm',260);
+ document.getElementById('scanMore').onclick=()=>BR.goAfter('screen05.html','scan',220);
+ document.getElementById('select').onchange=e=>{const im=cfg.images.find(x=>x.imageId===e.target.value);if(im){current=im;render()}};
 })();
-</script><script src="./register-sw.js?v=20260927-8"></script></body></html>
+</script><script src="./register-sw.js?v=20260927-9"></script></body></html>

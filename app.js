@@ -140,4 +140,30 @@ function playCompletionSound(){
   tone(2093,.18,'triangle',.22,.62);
 }
 function rewardTransition(r){localStorage.setItem('barameelRewardTransition',JSON.stringify({startedAt:Date.now(),...r}));}
+/* Navigation / utility helpers retained from the working V7 core. */
+function flash(){
+  let el=document.getElementById('barameelFlash');
+  if(!el){el=document.createElement('div');el.id='barameelFlash';el.className='barameel-flash';document.body.appendChild(el)}
+  el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
+}
+function go(url){location.href=url}
+function goAfter(url,type,delay=180){play(type);window.setTimeout(()=>go(url),delay)}
+function preload(src){const im=new Image();im.decoding='async';im.src=src;return im}
+function idle(fn){(window.requestIdleCallback||((cb)=>setTimeout(cb,350)))(fn,{timeout:1200})}
+function preloadAll(list){let i=0;const next=()=>{if(i>=list.length)return;preload(list[i++]);idle(next)};next()}
+async function fetchCollection(id='collection01'){
+  const r=await fetch(`./assets/collections/${id}/collection.json`,{cache:'no-store'});
+  if(!r.ok)throw Error('Collection data unavailable');
+  return r.json();
+}
+function parseQR(raw){
+  const s=decodeURIComponent(String(raw||'')).trim();
+  let m=s.match(/collection0?(\d+)\|image0?(\d+)\|piece0?(\d+)/i);
+  if(!m){
+    const c=s.match(/collection0?(\d+)/i),i=s.match(/image0?(\d+)/i),p=s.match(/piece0?(\d+)/i);
+    if(!p)return null;
+    m=[null,c?c[1]:1,i?i[1]:10,p[1]];
+  }
+  return {collection:`collection${String(m[1]).padStart(2,'0')}`,image:`image${String(m[2]).padStart(2,'0')}`,piece:Number(m[3])};
+}
 window.BR={RUNNERS,RUNNER_NAMES,state,setRunner,setNickname,addPoints,collect,pieces,count,hasPiece,selected,setLastReward,play,playSelect,playPointsCountUp,playCompletionSound,playRewardFrom,flash,go,goAfter,preload,preloadAll,idle,fetchCollection,parseQR,rewardTransition,save,registerCheckpoint,checkpointCount};
