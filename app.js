@@ -18,7 +18,7 @@ function hasPiece(c,image,p){return pieces(c,image).includes(Number(p))}
 function selected(){return state.runner||"brona"}
 function setLastReward(r){state.lastReward=r;save()}
 
-/* BARAMEEL RUN ARCADE AUDIO — v3
+/* BARAMEEL RUN ARCADE AUDIO — v5
    Audio is explicitly unlocked on the first real user gesture, then played from
    local WAV assets. WebAudio is retained as a guaranteed local fallback. */
 const SOUND_FILES={
@@ -75,7 +75,7 @@ function fallbackSound(type){
   if(type==='scan'){[660,880,1175,1568].forEach((f,i)=>tone(f,.055,'square',.24,i*.055));return}
   if(type==='confirm'){[523,659,784,1047,1568].forEach((f,i)=>tone(f,.065,'square',.27,i*.05));return}
   if(type==='select'){[392,523,659,988,1319].forEach((f,i)=>tone(f,.06,i<4?'square':'triangle',.25,i*.045));return}
-  tone(720,.055,'square',.23);tone(980,.045,'square',.18,.055);
+  tone(740,.06,'square',.25);tone(1040,.05,'square',.20,.055);
 }
 function primeSounds(){
   if(soundPrimed)return;
@@ -98,7 +98,7 @@ function play(type){
   }catch(e){ fallbackSound(type); return null; }
 }
 primeSounds();
-['pointerdown','touchstart','mousedown','keydown'].forEach(ev=>window.addEventListener(ev,ensureGestureAudio,{once:true,capture:true,passive:true}));
+['pointerdown','touchstart','mousedown','keydown'].forEach(ev=>window.addEventListener(ev,ensureGestureAudio,{capture:true,passive:true}));
 
 function playRewardFrom(offset=0){ensureGestureAudio();let a=document.getElementById('rewardAudio');if(!a){a=document.createElement('audio');a.id='rewardAudio';a.src='./audio/reward-levelup.mp3';a.preload='auto';a.style.display='none';document.body.appendChild(a)}a.currentTime=Math.max(0,offset);a.volume=.9;const p=a.play();p?.catch(()=>{});return a}
 

@@ -1,4 +1,4 @@
-const CACHE='barameel-run-shell-v4';
+const CACHE='barameel-run-shell-v5';
 const SHELL=['./','./index.html','./screen02.html','./screen03.html','./screen04.html','./screen05.html','./screen06.html','./styles.css','./app.js','./register-sw.js','./assets/screen01-start.webp','./assets/screen05-scanner.webp','./assets/screen06-puzzle.webp','./audio/tap.wav','./audio/select.wav','./audio/confirm.wav','./audio/back.wav','./audio/scan.wav','./audio/error.wav','./audio/reward-levelup.mp3'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('barameel-run-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
