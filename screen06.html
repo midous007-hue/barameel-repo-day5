@@ -10,7 +10,7 @@ function render(){renderHero();renderThumbs()}
 function animateReward(){const r=BR.state.lastReward;if(!r||!r.points)return;sub.textContent='POINTS EARNED';const amount=Number(r.points)||0,start=performance.now(),duration=900;function tick(now){const t=Math.min(1,(now-start)/duration),e=1-Math.pow(1-t,3);reward.textContent='+'+Math.round(amount*e).toLocaleString()+' POINTS';reward.style.transform=`scale(${1+0.22*Math.sin(Math.min(1,t)*Math.PI)})`;if(t<1)requestAnimationFrame(tick);else{reward.textContent='+'+amount.toLocaleString()+' POINTS';setTimeout(()=>reward.style.transform='',250)}}requestAnimationFrame(tick)}
 function completeEffect(){if(BR.count(collection,current.imageId)===9){document.getElementById('completeFlash').classList.remove('on');void document.body.offsetWidth;document.getElementById('completeFlash').classList.add('on')}}
 render();animateReward();completeEffect();
-document.getElementById('back').onclick=()=>{BR.play('back');BR.go('screen05.html')};document.getElementById('nice').onclick=()=>{BR.play('confirm');BR.go('screen05.html')};document.getElementById('select').onchange=e=>{const im=cfg.images.find(x=>x.imageId===e.target.value);if(im){current=im;render()}};
+document.getElementById('back').onclick=()=>BR.goAfter('screen05.html','back',180);document.getElementById('nice').onclick=()=>BR.goAfter('screen05.html','confirm',250);document.getElementById('select').onchange=e=>{const im=cfg.images.find(x=>x.imageId===e.target.value);if(im){current=im;render()}};
 const tr=JSON.parse(localStorage.getItem('barameelRewardTransition')||'null');if(tr?.startedAt){const elapsed=(Date.now()-tr.startedAt)/1000;if(elapsed<1.8)BR.playRewardFrom(Math.max(0,elapsed))}
 })();
 </script><script src="./register-sw.js"></script></body></html>
