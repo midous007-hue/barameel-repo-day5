@@ -1,37 +1,30 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><title>BARAMEEL RUN — Scan the QR Checkpoint</title><link rel="stylesheet" href="./styles.css"></head>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><title>BARAMEEL RUN — Scan the QR Checkpoint</title><link rel="stylesheet" href="./styles.css"><script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script></head>
 <body><main class="scan-stage" style="--ratio:.5772;--ar:953/1651"><img id="scanBg" class="scan-art" src="./assets/screen05-scanner.png" alt="Scan the checkpoint">
 <button id="back" class="scan-back-hotspot" aria-label="Back"></button>
-<div class="camera-window"><video id="video" playsinline muted></video><div id="scanLine"></div></div>
+<div class="camera-window"><video id="video" playsinline muted></video><canvas id="canvas" aria-hidden="true"></canvas><div id="scanLine"></div></div>
 <button id="open" class="scan-open-hotspot" aria-label="Open camera and scan QR"></button>
-<div id="scanMessage" class="scan-message">READY</div><div id="successFlash" class="success-flash"></div></main>
+<button id="puzzleHotspot" class="scan-puzzle-hotspot" aria-label="Continue to puzzle" hidden></button>
+<div id="scanMessage" class="scan-message"></div><div id="successFlash" class="success-flash"></div></main>
 <script src="./app.js"></script><script>
-const video=document.getElementById("video"),open=document.getElementById("open"),back=document.getElementById("back"),line=document.getElementById("scanLine"),msg=document.getElementById("scanMessage"),flash=document.getElementById("successFlash");
-let stream=null,detector=null,raf=0,done=false;
-back.onclick=()=>{BR.play("back");BR.go("screen04.html")};
+const video=document.getElementById("video"),canvas=document.getElementById("canvas"),ctx=canvas.getContext("2d",{willReadFrequently:true}),open=document.getElementById("open"),back=document.getElementById("back"),line=document.getElementById("scanLine"),flash=document.getElementById("successFlash"),puzzleHotspot=document.getElementById("puzzleHotspot");
+let stream=null,detector=null,raf=0,done=false,lastRaw="";
+back.onclick=()=>{BR.play("back");stopCamera();BR.go("screen04.html")};
 open.onclick=startCamera;
+puzzleHotspot.onclick=()=>{if(!done)return;BR.play("confirm");goPuzzle()};
+function goPuzzle(){const tr=JSON.parse(localStorage.getItem("barameelLastQR")||"null");if(tr?.collection&&tr?.piece)location.href=`./screen06.html?collection=${encodeURIComponent(tr.collection)}&piece=${encodeURIComponent(tr.piece)}`;else location.href="./screen06.html"}
 async function startCamera(){
-  BR.play("scan");msg.textContent="SCANNING…";
-  if(!navigator.mediaDevices?.getUserMedia){BR.play("error");msg.textContent="CAMERA NOT SUPPORTED";return;}
+  if(stream)return; done=false;puzzleHotspot.hidden=true;BR.play("scan");
+  if(!navigator.mediaDevices?.getUserMedia){BR.play("error");return;}
   try{
-    stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{width:{ideal:1080},height:{ideal:1080},facingMode:{ideal:"environment"}}});
+    stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{exact:"environment"},width:{ideal:1280},height:{ideal:720}}}).catch(()=>navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:"environment",width:{ideal:1280},height:{ideal:720}}}));
     video.srcObject=stream;await video.play();video.style.display="block";line.classList.add("on");
-    if("BarcodeDetector" in window){try{const f=await BarcodeDetector.getSupportedFormats();if(f.includes("qr_code"))detector=new BarcodeDetector({formats:["qr_code"]});}catch(e){}}
-    if(detector)scanLoop(); else msg.textContent="CAMERA READY — SCAN A QR";
-  }catch(e){BR.play("error");msg.textContent="ALLOW CAMERA ACCESS"; }
+    if("BarcodeDetector" in window){try{const f=await BarcodeDetector.getSupportedFormats();if(f.includes("qr_code"))detector=new BarcodeDetector({formats:["qr_code"]});}catch(e){detector=null}}
+    if(detector)scanNative();else scanJsQr();
+  }catch(e){stream=null;BR.play("error");}
 }
-async function scanLoop(){
-  if(done||!detector)return;
-  try{const codes=await detector.detect(video);if(codes?.length){handleQR(codes[0].rawValue||"");return;}}catch(e){}
-  raf=requestAnimationFrame(scanLoop);
-}
-function handleQR(raw){
-  if(done)return;done=true;cancelAnimationFrame(raf);stream?.getTracks().forEach(t=>t.stop());line.classList.remove("on");
-  const parsed=BR.parseQR(raw);BR.collect(parsed.collection,parsed.piece);BR.addPoints(100);
-  BR.play("success");
-  BR.startRewardTransition(parsed.piece);
-  flash.classList.add("on");
-  document.body.classList.add("scan-complete");
-  setTimeout(()=>location.href=`./screen06.html?collection=${encodeURIComponent(parsed.collection)}&piece=${parsed.piece}`,900);
-}
-window.addEventListener("pagehide",()=>stream?.getTracks().forEach(t=>t.stop()));
+async function scanNative(){if(done||!detector)return;try{const codes=await detector.detect(video);if(codes?.length){handleQR(codes[0].rawValue||"");return;}}catch(e){}raf=requestAnimationFrame(scanNative)}
+function scanJsQr(){if(done)return; if(!window.jsQR){raf=requestAnimationFrame(scanJsQr);return;} if(video.readyState>=2&&video.videoWidth){canvas.width=video.videoWidth;canvas.height=video.videoHeight;ctx.drawImage(video,0,0,canvas.width,canvas.height);const image=ctx.getImageData(0,0,canvas.width,canvas.height);const code=window.jsQR(image.data,image.width,image.height,{inversionAttempts:"attemptBoth"});if(code?.data){handleQR(code.data);return;}}raf=requestAnimationFrame(scanJsQr)}
+function handleQR(raw){if(done)return;const parsed=BR.parseQR(raw);if(!parsed)return;done=true;lastRaw=raw;cancelAnimationFrame(raf);stopCamera();BR.collect(parsed.collection,parsed.piece);BR.addPoints(100);localStorage.setItem("barameelLastQR",JSON.stringify({collection:parsed.collection,piece:parsed.piece,raw,at:Date.now()}));BR.play("success");BR.startRewardTransition(parsed.piece);flash.classList.add("on");puzzleHotspot.hidden=false;setTimeout(goPuzzle,1100)}
+function stopCamera(){cancelAnimationFrame(raf);raf=0;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}video.pause();video.srcObject=null;line.classList.remove("on")}
+window.addEventListener("pagehide",stopCamera);
 </script></body></html>
