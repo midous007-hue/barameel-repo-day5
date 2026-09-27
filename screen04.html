@@ -1,3 +1,17 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><title>BARAMEEL RUN — Run</title><link rel="stylesheet" href="./styles.css?v=20260927-11"></head><body><main class="stage stage-run"><img id="art" class="base" alt="BARAMEEL RUN run mode" decoding="async"><div id="hotspots"></div></main><script src="./app.js?v=20260927-11"></script><script>
-const c=BR.selected(),art=document.getElementById('art'),hs=document.getElementById('hotspots');art.src=`./assets/screen04-${c}.png`;function add(css,fn){const b=document.createElement('button');b.className='hotspot';b.style.cssText=css;b.onclick=fn;hs.appendChild(b)}add('left:2.5%;top:2%;width:18.5%;height:5.4%',()=>BR.goAfter('screen03.html','back',420));add('left:51%;top:72.5%;width:46.5%;height:8.8%',()=>BR.goAfter('screen05.html','scan',420));add('left:51%;top:82.2%;width:20%;height:7.5%',()=>BR.play('tap'));add('left:71%;top:82.2%;width:26%;height:7.5%',()=>BR.play('tap'));BR.idle(()=>BR.preload('./assets/screen05-scanner.webp'));
-</script><script src="./register-sw.js?v=20260927-11"></script></body></html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#061f27"><title>BARAMEEL RUN — My Progress</title><link rel="stylesheet" href="./styles.css?v=20260927-12"></head><body><main class="rewards-stage rewards-artwork-stage"><img id="rewardsArt" class="rewards-art" src="./assets/screen04-rewards.webp" alt="BARAMEEL RUN progress" fetchpriority="high" decoding="async"><div class="rewards-hotspots"><button id="back" class="rewards-back" type="button" aria-label="Back"></button><button id="scan" class="rewards-scan-hotspot" type="button" aria-label="Scan QR"></button><button id="settings" class="rewards-settings-hotspot" type="button" aria-label="Settings"></button></div><div id="progressData" class="progress-data" aria-live="polite"><span id="pointsValue" class="progress-value points-value">0</span><span id="rankValue" class="progress-value rank-value">—</span><span id="weeklyValue" class="progress-value weekly-value">0</span><span id="checkpointValue" class="progress-value checkpoint-value">0</span><div id="checkpointDots" class="checkpoint-dots" aria-hidden="true"></div></div></main><script src="./app.js?v=20260927-12"></script><script>
+(function(){
+  const s=BR.state||{};
+  const points=Math.max(0,Number(s.points)||0);
+  const weekly=Math.max(0,Number(s.weeklyPoints)||0);
+  const checkpoints=Array.isArray(s.checkpoints)?s.checkpoints.length:0;
+  document.getElementById('pointsValue').textContent=points.toLocaleString();
+  document.getElementById('weeklyValue').textContent=weekly.toLocaleString();
+  document.getElementById('checkpointValue').textContent=checkpoints.toLocaleString();
+  // The artwork provides six checkpoint circles. Fill them progressively without inventing a rank system.
+  const dots=document.getElementById('checkpointDots');
+  for(let i=0;i<6;i++){const d=document.createElement('span');d.className='checkpoint-dot'+(i<Math.min(6,checkpoints)?' on':'');dots.appendChild(d)}
+  document.getElementById('back').onclick=()=>BR.goAfter('screen03.html','back',220);
+  document.getElementById('scan').onclick=()=>BR.goAfter('screen05.html','scan',180);
+  document.getElementById('settings').onclick=()=>BR.play('tap');
+})();
+</script><script src="./register-sw.js?v=20260927-12"></script></body></html>

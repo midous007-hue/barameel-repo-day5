@@ -57,3 +57,20 @@
 .rewards-row-hotspot.rank-row{left:53%;top:51.8%;width:43%;height:8.3%}
 .rewards-row-hotspot.weekly-row{left:53%;top:59.0%;width:43%;height:8.3%}
 .rewards-row-hotspot.checkpoint-row{left:53%;top:66.8%;width:43%;height:8.8%}
+
+/* V12 — Screen 04 is the actual progress / rewards home. */
+.rewards-stage.rewards-artwork-stage{aspect-ratio:720/1280;height:min(100dvh,calc(100vw*1280/720));width:min(100vw,calc(100dvh*720/1280));background:#061f27}
+.rewards-stage.rewards-artwork-stage .rewards-art{object-fit:fill}
+.progress-data{position:absolute;inset:0;z-index:22;pointer-events:none}
+.progress-value{position:absolute;display:flex;align-items:center;justify-content:center;font-family:"Arial Black",Impact,sans-serif;font-weight:900;line-height:1;text-align:center;white-space:nowrap;pointer-events:none}
+.progress-value.points-value{left:67.3%;top:46.9%;width:23%;height:4.6%;font-size:clamp(17px,4.8vw,35px);color:#071a20;text-shadow:none}
+.progress-value.rank-value{left:67.3%;top:53.15%;width:23%;height:4.5%;font-size:clamp(14px,4.2vw,31px);color:#fff;text-shadow:2px 2px 0 #071a20}
+.progress-value.weekly-value{left:67.3%;top:59.45%;width:23%;height:4.5%;font-size:clamp(14px,4.2vw,31px);color:#fff;text-shadow:2px 2px 0 #071a20}
+.progress-value.checkpoint-value{left:63.6%;top:70.0%;width:27%;height:4.0%;font-size:clamp(13px,3.8vw,28px);color:#fff;text-shadow:2px 2px 0 #071a20}
+.progress-data .checkpoint-dots{position:absolute;left:64.1%;top:67.0%;width:25.5%;height:3.2%;display:flex;align-items:center;justify-content:space-between}
+.progress-data .checkpoint-dot{width:12.8%;aspect-ratio:1;border-radius:50%;border:2px solid rgba(255,255,255,.88);background:transparent;box-shadow:0 0 2px rgba(0,0,0,.6)}
+.progress-data .checkpoint-dot.on{background:#f7bd27;border-color:#f7bd27;box-shadow:0 0 6px rgba(247,189,39,.85)}
+.scan-collections-hotspot{position:absolute;z-index:200;left:18%;top:81.7%;width:76%;height:7.0%;border:0;background:transparent;padding:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer}
+.scan-collections-hotspot:active{transform:scale(.985)}
+/* The supplied V12 scanner artwork contains two distinct buttons; do not let the first hotspot cover the second. */
+.scan-stage .scan-open-hotspot{left:18%;top:74.15%;width:76%;height:7.0%}

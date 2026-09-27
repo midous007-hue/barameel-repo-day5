@@ -34,15 +34,16 @@ BARAMEEL RUN — NEW REPOSITORY / UPLOAD ORDER
 8) Screen artwork already included in this package is optimized WebP for fast loading:
    assets/screen01-start.webp
    assets/screen05-scanner.webp
+   assets/screen04-rewards.webp
    assets/screen06-puzzle.webp
    Do not upload the old large PNG versions over these unless you intentionally want the heavier version.
 9) GitHub Pages: Settings -> Pages -> Deploy from branch -> main -> /(root) -> Save.
 10) Wait for Pages deployment, then open the root URL.
-11) Test in this order: screen01 -> screen02 -> screen03 -> screen04 -> screen05 camera -> QR -> screen06.
+11) Test in this order: screen01 -> screen02 -> screen03 -> screen04 progress -> screen05 camera -> QR -> screen06 collections.
 
 IMPORTANT:
 - Do not upload an old app.js/styles.css/screen06.html over the new files.
-- Do not create screens 07-10.
+- Do not create screens 07-10. Screen 04 is the progress/rewards home; Screen 05 is the scanner; Screen 06 is the collection.
 - The final screen's NICE ONE button returns to screen05 to scan another QR.
 - Screen06 only displays puzzle cells that have actually been collected.
 - Bottom 10 image cards only reveal the individual 3x3 cells that have been collected.
